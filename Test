@@ -1,0 +1,129 @@
+# =============================================
+# Author: Romulo
+# Create date: 31/11/2024
+# Description: Script to find exact match keyword between to offer title
+# name and UPSP keyword list.
+# =============================================
+
+#Python Libraries
+from google.colab import drive
+import pandas as pd
+
+# Mount Google Drive
+drive.mount('/content/drive')
+
+# File paths
+title_keywords_path = '/content/drive/My Drive/CSV/title_keywords.csv' #Offers title name
+keyword_list_path = '/content/drive/My Drive/CSV/keyword_list.csv' #UPSP Keywords
+output_path = '/content/drive/My Drive/CSV/output.csv'
+
+# Read the title keywords and keyword list CSV files
+title_keywords_df = pd.read_csv(title_keywords_path)
+keyword_list_df = pd.read_csv(keyword_list_path)
+
+# Function to convert string data to lowercase
+def convert_to_lower(df):
+for column in df.columns:
+if df[column].dtype == 'O':
+df[column] = df[column].str.lower()
+return df
+
+# Convert all string data to lowercase in both dataframes
+title_keywords_df = convert_to_lower(title_keywords_df)
+keyword_list_df = convert_to_lower(keyword_list_df)
+
+# Find exact matches between offer title keywords and UPSP keyword list
+matches = []
+for title_keyword in title_keywords_df['title_keywords']:
+found_match = False
+for keyword in keyword_list_df['keyword_list']:
+if keyword in title_keyword:
+matches.append({'title_keyword': title_keyword, 'matched_keyword': keyword})
+found_match = True
+if not found_match:
+matches.append({'title_keyword': title_keyword, 'matched_keyword': 'Not found'})
+
+# Create DataFrame with matches
+output_df = pd.DataFrame(matches)
+
+# Save the matches to an output CSV file
+output_df.to_csv(output_path, index=False)
+
+
+
+# =============================================
+# Author: Romulo
+# Create date: 08/10/2024
+# Description: Script to find phone numbers searching on google search to identify Free SMS receiving numbers.
+#
+# =============================================
+
+#Python Libraries
+import re
+import csv
+from googlesearch import search
+from google.colab import drive
+
+# Mount Google Drive
+drive.mount('/content/gdrive')
+
+# Function to extract the name from a URL
+def extract_name(url):
+match = re.search(r'www\.(.*?)\.', url)
+return match.group(1) if match else None
+
+# Function to tag(True or False) the URL for specific keywords from a URL
+def has_keywords(url):
+keywords = ["sms", "free","temporary","free","temp"] #Receive SMS keywords
+return any(keyword in url for keyword in keywords)
+
+# Function to perform Google search and get the top 4 result URLs for each phone number
+def get_top_results_for_phone_numbers(phone_numbers, num_results=4):
+results_data = []
+
+for phone_number in phone_numbers:
+query = f"{phone_number} information"
+results = search(query, num=num_results, stop=num_results, pause=2)
+
+# Store the phone number, result URLs, and whether "receive-sms" is in the URL
+for result in results:
+result_data = (phone_number, result, has_keywords(result))
+results_data.append(result_data)
+
+return results_data
+
+# Read phone numbers from CSV file in Google Drive
+def read_phone_numbers_from_csv(file_path):
+phone_numbers = []
+
+with open(file_path, 'r') as csv_file:
+csv_reader = csv.reader(csv_file)
+next(csv_reader) # Skip header row if present
+
+for row in csv_reader:
+phone_numbers.append(row[0]) # Assuming phone numbers are in the first column
+
+return phone_numbers
+
+# CSV file path in Google Drive containing phone numbers
+csv_file_path = '/content/gdrive/My Drive/CSV/Project Phone Signal_20231018-100942 - Project Phone Signal_20231018-100942.csv'
+
+# Read phone numbers from CSV file
+phone_numbers = read_phone_numbers_from_csv(csv_file_path)
+
+# Perform Google searches for each phone number and get the top 4 result URLs
+results_data = get_top_results_for_phone_numbers(phone_numbers, num_results=4)
+
+# Filter out rows where "Has SMS Keyword" is False
+filtered_results = [row for row in results_data if row[2]]
+
+# Create a CSV file with the phone numbers, search result URLs, and "receive-sms" keyword column
+csv_results_file_path = '/content/gdrive/My Drive/CSV/search_results_top4_with_keyword_New.csv'
+with open(csv_results_file_path, 'w', newline='') as csv_file:
+csv_writer = csv.writer(csv_file)
+csv_writer.writerow(["Phone Number", "Search Result URL", "Has Receive SMS Keyword", "Extracted Name"])
+csv_writer.writerows(filtered_results)
+
+# Display the path to the CSV file with search results in Google Drive
+csv_results_file_path
+
