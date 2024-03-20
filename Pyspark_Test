@@ -1,0 +1,48 @@
+# =============================================
+# Author: Romulo
+# Create date: 31/11/2023
+# Description: Quartile analysis
+# =============================================
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, expr, percent_rank, lit
+from pyspark.sql.window import Window
+
+# Create a SparkSession
+spark = SparkSession.builder \
+    .appName("Google Drive Performance Analysis") \
+    .getOrCreate()
+
+# Load data from CSV file
+csv_path = "path_to_your_csv_file.csv"
+df = spark.read.csv(csv_path, header=True)  # Assuming CSV has a header row
+
+# Assuming performance data is in column A2 (i.e., second column)
+performance_col = "A2"
+
+# Calculate quartiles
+quartiles = df.approxQuantile(performance_col, [0.25, 0.5, 0.75], 0.001)
+
+# Display quartiles
+print("Quartiles:")
+print("25th Percentile (Q1):", quartiles[0])
+print("Median (Q2):", quartiles[1])
+print("75th Percentile (Q3):", quartiles[2])
+
+# Add a quartile label column
+df_with_quartile = df.withColumn("quartile",
+                                 expr(f"CASE WHEN {performance_col} <= {quartiles[0]} THEN 'Q1' " +
+                                      f"WHEN {performance_col} <= {quartiles[1]} THEN 'Q2' " +
+                                      f"WHEN {performance_col} <= {quartiles[2]} THEN 'Q3' " +
+                                      "ELSE 'Q4' END"))
+
+# Display quartile analysis
+print("\nQuartile Analysis:")
+df_with_quartile.show()
+
+# Save the dataframe with quartile analysis to a new CSV file
+output_path = "path_to_save/quartile_analysis.csv"
+df_with_quartile.write.csv(output_path, header=True, mode="overwrite")
+
+# Stop the SparkSession
+spark.stop()
