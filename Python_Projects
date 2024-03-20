@@ -1,6 +1,6 @@
 # =============================================
 # Author: Romulo
-# Create date: 31/11/2024
+# Create date: 31/11/2023
 # Description: Script to find exact match keyword between to offer title
 # name and keyword list.
 # =============================================
@@ -53,7 +53,7 @@ output_df.to_csv(output_path, index=False)
 
 # =============================================
 # Author: Romulo
-# Create date: 08/10/2024
+# Create date: 08/10/2023
 # Description: Script to find phone numbers searching on google search to identify Free SMS receiving numbers.
 #
 # =============================================
